@@ -1,0 +1,493 @@
+{
+  "name": "Documentação",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://catalog.price.list",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"select\": [\n    \"id\",\n    \"productId\",\n    \"catalogGroupId\",\n    \"price\",\n    \"currency\"\n  ],\n  \"filter\": {\n    \"productId\": {{ $json.id }}\n  },\n  \"order\": {\n    \"id\": \"ASC\"\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "bf7c2b65-99a9-4980-818a-d3105ff76e14",
+      "name": "preços e tipo de moeda"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://catalog.product.list.json",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"filter\": {\n    \"iblockId\": 17\n  },\n  \"select\": [\n    \"id\",\n    \"iblockId\",\n    \"name\",\n    \"price\",\n    \"currency\"\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -896,
+        192
+      ],
+      "id": "ac65cdd9-8b84-4567-ba08-d96bf84ad5fd",
+      "name": "Pagina 1 SKU filhos"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        224,
+        96
+      ],
+      "id": "e8e59858-d629-4527-882c-fcccb14d88e0",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://catalog.productImage.list",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"productId\": {{ $json.id }},\n  \"select\": [\n    \"id\",\n    \"name\",\n    \"productId\",\n    \"type\",\n    \"createTime\",\n    \"downloadUrl\",\n    \"detailUrl\"\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        224,
+        368
+      ],
+      "id": "c17e95f8-7022-4102-9020-36f9595ccabd",
+      "name": "Imagens"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        448,
+        192
+      ],
+      "id": "8a204536-b174-4704-b310-2b7b362353fd",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://catalog.product.list.json",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"filter\": {\n    \"iblockId\": 17\n  },\n  \"select\": [\n    \"id\",\n    \"iblockId\",\n    \"name\",\n    \"price\",\n    \"currency\"\n  ],\n  \"start\": 50\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -896,
+        384
+      ],
+      "id": "f80d8d79-6031-4bee-a7c2-7c5ceb9b207c",
+      "name": "Pagina 2 SKU filhos"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -672,
+        288
+      ],
+      "id": "1676638d-91f8-4b07-b2b2-7718bf17fb15",
+      "name": "Junta as Paginas"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1120,
+        288
+      ],
+      "id": "ee1677e4-ea1d-429d-b7d4-633041ff23d7",
+      "name": "START"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "result.products",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -448,
+        288
+      ],
+      "id": "0f9837b7-1fc6-4064-8787-50bb9763d7f6",
+      "name": "Separa os Itens"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -224,
+        288
+      ],
+      "id": "5bd84daf-8b69-4576-a335-9e3780a2a404",
+      "name": "Repete todos os itens",
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "tableId": "sku_products_bitrix24",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "iblockId",
+              "fieldValue": "={{ $json.iblockId }}"
+            },
+            {
+              "fieldId": "productId",
+              "fieldValue": "={{ $json.productId }}"
+            },
+            {
+              "fieldId": "name",
+              "fieldValue": "={{ $json.productName }}"
+            },
+            {
+              "fieldId": "active",
+              "fieldValue": "={{ $json.active }}"
+            },
+            {
+              "fieldId": "canBuyZero",
+              "fieldValue": "={{ $('Merge1').item.json.result.product.canBuyZero }}"
+            },
+            {
+              "fieldId": "createdBy",
+              "fieldValue": "={{ $('Merge1').item.json.result.product.createdBy }}"
+            },
+            {
+              "fieldId": "dateCreate",
+              "fieldValue": "=12-10-2025"
+            },
+            {
+              "fieldId": "iblockSectionId",
+              "fieldValue": "={{ $('Merge1').item.json.result.product.iblockSectionId }}"
+            },
+            {
+              "fieldId": "previewText",
+              "fieldValue": "={{ $('Merge1').item.json.result.product.previewText }}"
+            },
+            {
+              "fieldId": "detailText",
+              "fieldValue": "={{ $('Merge1').item.json.result.product.detailText }}"
+            },
+            {
+              "fieldId": "previewPicture",
+              "fieldValue": "={{ $json.imageUrl }}"
+            },
+            {
+              "fieldId": "detailPicture",
+              "fieldValue": "={{ $json.imageUrl }}"
+            },
+            {
+              "fieldId": "previewTextType",
+              "fieldValue": "={{ $('Merge1').item.json.result.product.previewTextType }}"
+            },
+            {
+              "fieldId": "detailTextType",
+              "fieldValue": "={{ $('Merge1').item.json.result.product.detailTextType }}"
+            },
+            {
+              "fieldId": "quantityTrace",
+              "fieldValue": "={{ $('Merge1').item.json.result.product.quantityTrace }}"
+            },
+            {
+              "fieldId": "purchasingCurrency",
+              "fieldValue": "=BRL"
+            },
+            {
+              "fieldId": "purchasingPrice",
+              "fieldValue": "={{ Math.round($json.price * 100)}}"
+            },
+            {
+              "fieldId": "quantity",
+              "fieldValue": "=500"
+            },
+            {
+              "fieldId": "parent_id",
+              "fieldValue": "={{ $json.parentId }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        896,
+        272
+      ],
+      "id": "4ebbfa75-32f3-4b81-bbac-8aafacae832f",
+      "name": "Add SKU no Supabase",
+      "credentials": {
+        "supabaseApi": {
+          "id": "ftIMwyGbUSUtcjwP",
+          "name": "Documentação"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "let output = [];\n\nfor (const item of items) {\n  const result = item.json.result || {};\n  const product = result.product || {};\n  const prices = result.prices || [];\n  const images = result.productImages || [];\n\n  const priceList = prices.length ? prices : [{}];\n\n  for (const price of priceList) {\n    output.push({\n      json: {\n        total: item.json.total || null,\n        time: item.json.time || null,\n\n        productId: product.id || product.ID || null,\n        productName: product.name || product.NAME || null,\n        type: product.type || product.TYPE || null,\n        iblockId: product.iblockId || null,\n        parentId: product.parentId?.value || null,\n        price: price.price || null,\n        currency: price.currency || null,\n        imageUrl: images[0]?.detailUrl || null,\n        active: product.active === \"Y\",\n        available: product.available === \"Y\",\n        quantity: product.quantity || 0,\n        xmlId: product.xmlId || product.XML_ID || null,\n      }\n    });\n  }\n}\n\nreturn output;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        192
+      ],
+      "id": "d197f3a6-c100-471f-8c63-d35bb07256f3",
+      "name": "Transforma em array"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://catalog.product.get",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "id",
+              "value": "={{ $json.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        192
+      ],
+      "id": "7dd18895-df3b-4e4d-a610-69fc382499a6",
+      "name": "Detalhes"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "preços e tipo de moeda": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pagina 1 SKU filhos": {
+      "main": [
+        [
+          {
+            "node": "Junta as Paginas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Imagens": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Transforma em array",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pagina 2 SKU filhos": {
+      "main": [
+        [
+          {
+            "node": "Junta as Paginas",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Junta as Paginas": {
+      "main": [
+        [
+          {
+            "node": "Separa os Itens",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "START": {
+      "main": [
+        [
+          {
+            "node": "Pagina 1 SKU filhos",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Pagina 2 SKU filhos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Separa os Itens": {
+      "main": [
+        [
+          {
+            "node": "Repete todos os itens",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Repete todos os itens": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Imagens",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Detalhes",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "preços e tipo de moeda",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add SKU no Supabase": {
+      "main": [
+        [
+          {
+            "node": "Repete todos os itens",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transforma em array": {
+      "main": [
+        [
+          {
+            "node": "Add SKU no Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Detalhes": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "884097f9-e68b-49aa-8aa0-2b85c42d23d9",
+  "meta": {
+    "instanceId": "e4e897c8a435e9272f2a0de0d79d4b6a45a2605403c7c3b29d983dc095e7a6fe"
+  },
+  "id": "3FyQ2CyDl76Z331U",
+  "tags": []
+}

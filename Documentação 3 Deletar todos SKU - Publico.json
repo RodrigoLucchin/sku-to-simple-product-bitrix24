@@ -1,0 +1,300 @@
+{
+  "name": "Documentação",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -896,
+        288
+      ],
+      "id": "c56aa438-3120-43f4-b9fa-b6733f00a613",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "sku_products_bitrix24",
+        "returnAll": true
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -672,
+        288
+      ],
+      "id": "919683a8-a8ad-4d51-a5a2-249fc3e2bf66",
+      "name": "Get many rows",
+      "credentials": {
+        "supabaseApi": {
+          "id": "ftIMwyGbUSUtcjwP",
+          "name": "Documentação"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "6c0b9211-dc29-4d54-b644-b7d45e4250e6",
+              "leftValue": "={{ $json.created_new }}",
+              "rightValue": "Y",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -448,
+        288
+      ],
+      "id": "bdc0053c-5359-49f2-914e-fef2967e03bc",
+      "name": "If"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -224,
+        400
+      ],
+      "id": "db033c19-008f-4860-aff1-0e9fe4518ca3",
+      "name": "Item ainda não atualizado"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://catalog.product.delete",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "id",
+              "value": "={{ $json.productId }}"
+            },
+            {
+              "name": "id",
+              "value": "={{ $('Get many rows').item.json.parent_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        192
+      ],
+      "id": "cb54f3d0-752e-4b66-99fa-ecfd10e9f2c7",
+      "name": "Apaga o SKU antigo",
+      "executeOnce": false,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "sku_products_bitrix24",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $('If').item.json.id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "deleted",
+              "fieldValue": "Y"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        224,
+        192
+      ],
+      "id": "c91be7a2-332a-493a-8c58-c2fe03bd38af",
+      "name": "Update a row",
+      "credentials": {
+        "supabaseApi": {
+          "id": "ftIMwyGbUSUtcjwP",
+          "name": "Documentação"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -224,
+        160
+      ],
+      "id": "9c42d1ff-6666-4441-9f76-da3f745a3d36",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "5c5cf153-4582-419e-86b5-9579a31822c0",
+      "name": "Atualização Concluida"
+    },
+    {
+      "parameters": {
+        "amount": 3
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        448,
+        208
+      ],
+      "id": "d37fe7a6-4e7b-47f4-abb5-f1bcdafecec7",
+      "name": "Wait",
+      "webhookId": "aa6f81a8-df1b-464c-bfa3-8921c7758c17"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get many rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many rows": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Item ainda não atualizado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apaga o SKU antigo": {
+      "main": [
+        [
+          {
+            "node": "Update a row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update a row": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "Atualização Concluida",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Apaga o SKU antigo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "8b50613b-75c0-433b-8fb8-49708ca79116",
+  "meta": {
+    "instanceId": "e4e897c8a435e9272f2a0de0d79d4b6a45a2605403c7c3b29d983dc095e7a6fe"
+  },
+  "id": "3FyQ2CyDl76Z331U",
+  "tags": []
+}

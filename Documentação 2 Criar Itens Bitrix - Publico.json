@@ -1,0 +1,606 @@
+{
+  "name": "Documentação",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "binaryToPropery",
+        "destinationKey": "base64img",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        -672,
+        16
+      ],
+      "id": "5e1df9a8-f855-4ff3-814c-a414978ea88c",
+      "name": "Base64"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.previewPicture }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -896,
+        16
+      ],
+      "id": "9d30c56b-b640-4594-b0a2-cd58c1b8ee07",
+      "name": "Baixa as Imagens"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "7d6a080f-ac2c-418e-a687-54b901a8a11e",
+              "leftValue": "={{ $json.previewPicture }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1120,
+        272
+      ],
+      "id": "a97ba006-6d70-40ac-bb74-116c37cc5797",
+      "name": "Tem imagem?"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "sku_products_bitrix24",
+        "returnAll": true,
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "created_new",
+              "condition": "is",
+              "keyValue": "NULL"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -1344,
+        272
+      ],
+      "id": "5305532f-5bac-414e-bd48-6f245df131fa",
+      "name": "Lista de SKU",
+      "executeOnce": false,
+      "credentials": {
+        "supabaseApi": {
+          "id": "ftIMwyGbUSUtcjwP",
+          "name": "Documentação"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -448,
+        176
+      ],
+      "id": "14563455-bf1f-4059-92f5-564aa4478fb2",
+      "name": "Merge"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1568,
+        272
+      ],
+      "id": "b0c25bb6-caee-43e6-bd42-119d6c864c7c",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://catalog.product.add",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"fields\": {\n    \"iblockId\": 15,\n    \"name\": \"{{ $json.name }}\",\n    \"active\": \"{{ $json.active }}\",\n    \"barcodeMulti\": \"Y\",\n    \"measure\": 5,\n    \"canBuyZero\": \"{{ $json.canBuyZero }}\",\n    \"createdBy\": \"16501\",\n    \"detailPicture\": {\n      \"fileData\": [\n        \"produto.jpg\",\n        \"{{ $json.base64img }}\"\n      ]\n    },\n    \"detailText\": \"{{ $json.detailText }}\",\n    \"detailTextType\": \"{{ $json.previewTextType }}\",\n    \"previewPicture\": {\n      \"fileData\": [\n        \"produto.jpg\",\n        \"{{ $json.base64img }}\"\n      ]\n    },\n    \"previewText\": \"{{ $json.previewText }}\",\n    \"previewTextType\": \"{{ $json.previewTextType }}\",\n    \"purchasingPrice\": \"{{ Number($json.purchasingPrice / 100) }}\",\n    \"price\": {{ Number($json.purchasingPrice / 100) }},\n    \"PRICE\": {{ Number($json.purchasingPrice / 100) }},\n    \"purchasingCurrency\": \"{{ $json.purchasingCurrency }}\",\n    \"quantity\": \"{{ $json.quantity }}\",\n    \"quantityTrace\": \"{{ $json.quantityTrace }}\"\n    }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        192
+      ],
+      "id": "6a0107a3-ea9d-46a4-aa19-d9ac95fd93b9",
+      "name": "Adiciona itens com imagem"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://catalog.price.add",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"fields\": {\n    \"catalogGroupId\": 1,\n    \"currency\": \"{{ $json.result.element.purchasingCurrency }}\",\n    \"price\": {{ $json.result.element.purchasingPrice }},\n    \"productId\": {{ $json.result.element.id }}\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        448,
+        192
+      ],
+      "id": "e63bbc8e-9fcc-4b7c-bdbf-e8fe04c8a2df",
+      "name": "Adiciona os preços"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://catalog.price.add",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"fields\": {\n    \"catalogGroupId\": 1,\n    \"currency\": \"{{ $json.result.element.purchasingCurrency }}\",\n    \"price\": {{ $json.result.element.purchasingPrice }},\n    \"productId\": {{ $json.result.element.id }}\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -224,
+        512
+      ],
+      "id": "6ba79b30-9f0f-409b-9513-b7b361fcc222",
+      "name": "Adiciona os preços1"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "sku_products_bitrix24",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "name",
+              "condition": "eq",
+              "keyValue": "={{JSON.stringify($('Espera de novo').item.json.result.element.name) }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "created_new",
+              "fieldValue": "Y"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        672,
+        192
+      ],
+      "id": "225d6e33-bd63-4db3-8423-36ea443de8e8",
+      "name": "Atualiza Supabase",
+      "credentials": {
+        "supabaseApi": {
+          "id": "ftIMwyGbUSUtcjwP",
+          "name": "Documentação"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -224,
+        176
+      ],
+      "id": "d7777ce8-177b-49b2-83d6-092027a58cee",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -896,
+        576
+      ],
+      "id": "b8573a50-495b-46c3-8f3e-99d1d8aba002",
+      "name": "Loop Over Items1"
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        224,
+        192
+      ],
+      "id": "9058297f-5d8e-41f2-a389-cf498746cf3b",
+      "name": "Espera de novo",
+      "webhookId": "28e74ec1-f45b-45b5-b104-175c8655fd79"
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -448,
+        512
+      ],
+      "id": "8af14348-6cb9-4761-b411-6da0e898bb95",
+      "name": "Espera mais 2 segundos",
+      "webhookId": "b3949a03-a3fb-41f8-b280-d7185d126068"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -672,
+        320
+      ],
+      "id": "8613cdeb-b916-45f7-8fbd-25850f45da3d",
+      "name": "show de bola"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "e6cd8ffd-e299-4c7f-8a77-68bb0a7289d4",
+      "name": "fechou"
+    },
+    {
+      "parameters": {
+        "amount": 3
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        896,
+        224
+      ],
+      "id": "b8629d67-7d5c-4eb4-bd73-b72f0d779540",
+      "name": "Espera 3 segundos",
+      "webhookId": "65b7d868-29cb-4306-a662-57060ca9b341"
+    },
+    {
+      "parameters": {
+        "amount": 3
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        656
+      ],
+      "id": "aa184a12-9c7f-46e0-9f09-af697d3f8cc6",
+      "name": "Espera 3 segundoss",
+      "webhookId": "d3fe2ffa-c164-4442-a150-e8a3a93665dc"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://catalog.product.add",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"fields\": {\n    \"iblockId\": 15,\n    \"name\": \"{{ $json.name }}\",\n    \"active\": \"{{ $json.active }}\",\n    \"barcodeMulti\": \"Y\",\n    \"measure\": 5,\n    \"canBuyZero\": \"{{ $json.canBuyZero }}\",\n    \"createdBy\": \"16501\",\n    \"detailPicture\": {\n      \"fileData\": [\n        \"produto.jpg\",\n        \"{{ $json.base64img }}\"\n      ]\n    },\n    \"detailText\": \"{{ $json.detailText }}\",\n    \"detailTextType\": \"{{ $json.previewTextType }}\",\n    \"previewPicture\": {\n      \"fileData\": [\n        \"produto.jpg\",\n        \"{{ $json.base64img }}\"\n      ]\n    },\n    \"previewText\": \"{{ $json.previewText }}\",\n    \"previewTextType\": \"{{ $json.previewTextType }}\",\n    \"purchasingPrice\": \"{{ Number($json.purchasingPrice / 100) }}\",\n    \"price\": {{ Number($json.purchasingPrice / 100) }},\n    \"PRICE\": {{ Number($json.purchasingPrice / 100) }},\n    \"purchasingCurrency\": \"{{ $json.purchasingCurrency }}\",\n    \"quantity\": \"{{ $json.quantity }}\",\n    \"quantityTrace\": \"{{ $json.quantityTrace }}\"\n    }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -672,
+        512
+      ],
+      "id": "08ecd6b0-bd04-4f9f-88cd-7aba9342cc29",
+      "name": "Adiciona itens com imagem1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Base64": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Baixa as Imagens": {
+      "main": [
+        [
+          {
+            "node": "Base64",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tem imagem?": {
+      "main": [
+        [
+          {
+            "node": "Baixa as Imagens",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ],
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lista de SKU": {
+      "main": [
+        [
+          {
+            "node": "Tem imagem?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Lista de SKU",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Adiciona itens com imagem": {
+      "main": [
+        [
+          {
+            "node": "Espera de novo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Adiciona os preços": {
+      "main": [
+        [
+          {
+            "node": "Atualiza Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Adiciona os preços1": {
+      "main": [
+        [
+          {
+            "node": "Espera 3 segundoss",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Atualiza Supabase": {
+      "main": [
+        [
+          {
+            "node": "Espera 3 segundos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "fechou",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Adiciona itens com imagem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items1": {
+      "main": [
+        [
+          {
+            "node": "show de bola",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Adiciona itens com imagem1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Espera de novo": {
+      "main": [
+        [
+          {
+            "node": "Adiciona os preços",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Espera mais 2 segundos": {
+      "main": [
+        [
+          {
+            "node": "Adiciona os preços1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Espera 3 segundos": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Espera 3 segundoss": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Adiciona itens com imagem1": {
+      "main": [
+        [
+          {
+            "node": "Espera mais 2 segundos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "64ffe081-3e22-4242-a194-17afb23c5954",
+  "meta": {
+    "instanceId": "e4e897c8a435e9272f2a0de0d79d4b6a45a2605403c7c3b29d983dc095e7a6fe"
+  },
+  "id": "3FyQ2CyDl76Z331U",
+  "tags": []
+}

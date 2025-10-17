@@ -1,3 +1,5 @@
+# PT/BR
+
 # Projeto de Sincronização de Catálogo com n8n, Supabase e Bitrix24
 
 Este projeto contém uma suíte de três workflows do n8n projetados para realizar uma operação completa de **ETL (Extract, Transform, Load)** e gerenciamento de produtos (SKUs) entre um sistema de catálogo de origem e um catálogo de destino no **Bitrix24**.
@@ -66,3 +68,76 @@ A utilização do **Supabase como um banco de dados de staging** é o pilar dest
     * Primeiro, execute o **`1. Add SKU Database`** para popular o banco de dados.
     * Em seguida, execute o **`2. Criar Itens Bitrix`** para criar os produtos no catálogo.
     * Se necessário, execute o **`3. Deletar Todos SKU`** para limpar os itens criados do catálogo do Bitrix24.
+
+---
+
+# EN/US
+
+# Catalog Synchronization Project with n8n, Supabase and Bitrix24
+
+This project contains a suite of three n8n workflows designed to perform a complete **ETL (Extract, Transform, Load)** and product (SKU) management operation between a source catalog system and a target catalog in **Bitrix24**.
+
+The solution uses a **Supabase** database as a *staging* (intermediate) area, which allows the extraction process to be decoupled from the loading process, offering greater control, resilience and auditability.
+
+## Technologies Used
+
+* **n8n:** The automation platform that orchestrates the entire data flow.
+* **Bitrix24 API:** The interface for interacting with the target product catalog, both for creation and deletion.
+* **Supabase (PostgreSQL):** Acts as an intermediate database to store, manage and track the synchronization state of each product.
+
+## Overview and Execution Order
+
+The project is divided into three distinct workflows, which must be executed in a specific sequence to ensure the process functions correctly.
+
+---
+
+### **Step 1: `1. Add SKU Database`**
+
+This is the first workflow of the process, responsible for **Extraction and Transformation (ET)** of data.
+
+* **Trigger:** **Manual**.
+* **Main Functionality:**
+    1. **Extraction:** Connects to a source catalog's API to fetch the list of products (SKUs), handling pagination to get all items.
+    2. **Enrichment:** Iterates over each individual product to fetch additional, detailed data, such as prices, images, and full descriptions, through complementary API calls.
+    3. **Transformation:** Structures and cleans all collected data into a standardized format.
+    4. **Staging:** Inserts formatted product data into a table in **Supabase**. This table will serve as the data source for the next step.
+
+---
+
+### **Step 2: `2. Create Bitrix`** Items
+
+This workflow is responsible for **Loading** data into the target system.
+
+* **Trigger:** **Manual**.
+* **Main Functionality:**
+    1. **Staging Reading:** Query the Supabase database to search for products that were inserted in Step 1, but that have not yet been created in Bitrix24 (identified by a flag, e.g. `created_new IS NULL`).
+    2. **Image Processing:** Checks if the product has an image. If so, the workflow downloads the file and converts it to **Base64** format, which is the standard required by the Bitrix24 API.
+    3. **Catalog Creation:** Iterates over each product and uses the Bitrix24 API (`catalog.product.add`) to create the item in the target catalog, sending all its details (including the image, if any).
+    4. **Status Update:** After successfully creating the product and adding its price, the workflow updates the corresponding record in Supabase (ex: `SET created_new = 'Y'`), marking it as "completed" to avoid future duplications.
+
+---
+
+### **Step 3: `3. Delete All SKU`**
+
+This is a **maintenance and cleaning** workflow, which can be used to reset the catalog.
+
+* **Trigger:** **Manual**.
+* **Main Functionality:**
+    1. **Reading Created Items:** Query Supabase and search for all products that were marked as successfully created in Bitrix24 (ex: `created_new = 'Y'`).
+    2. **Batch Delete:** Iterates over the list of products and makes calls to the Bitrix24 API (`catalog.product.delete`) to remove each one from the catalog.
+    3. **Status Update:** After deletion, update the record in Supabase (ex: `SET deleted = 'Y'`) to record that the action was completed.
+
+## Architecture and Core Logic
+
+The use of **Supabase as a staging database** is the cornerstone of this architecture. It functions as a persistent "queue" and ledger, allowing you to:
+* The extraction process (Step 1) can be performed independently of creation (Step 2).
+* If the creation of an item fails, it will remain in the database as "not created" and can be reprocessed without having to extract all the data again.
+* There is a clear record of which products were created, when and if they were deleted, facilitating auditing and maintenance.
+
+## How to Use
+
+1. **Configuration:** Ensure that Supabase and Bitrix24 API credentials are properly configured on the corresponding nodes in each workflow.
+2. **Execution:** Execute the workflows in the designated numerical order:
+    * First, run **`1. Add SKU Database`** to populate the database.
+    * Then run **`2. Create Bitrix`** Items to create the products in the catalog.
+    * If necessary, run **`3. Delete All SKU`** to clear the created items from the Bitrix24 catalog.

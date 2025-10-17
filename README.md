@@ -1,3 +1,5 @@
+EN/US version on the end of readme
+
 # PT/BR
 
 # Projeto de Sincronização de Catálogo com n8n, Supabase e Bitrix24
